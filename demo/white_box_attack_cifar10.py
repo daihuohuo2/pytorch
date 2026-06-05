@@ -20,21 +20,43 @@ from pathlib import Path
 # parents[1] 就是项目根目录 adversarial-attacks-pytorch-lab/。
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-# 把项目根目录加入搜索路径，才能 import src.models 包。
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
+# 注意导入顺序：必须先导入 torchattacks（pip 安装版），
+# 再把 PROJECT_ROOT 加入 sys.path。
+# 原因：项目根目录下有一个同名的 torchattacks/ 占位文件夹，
+# 如果先加入 PROJECT_ROOT，Python 会优先找到本地空壳而不是 pip 安装的库。
 import torch
 import torch.nn as nn
-import torchattacks                          # pip 安装的正式版对抗攻击库
+import torchattacks                          # 必须在 sys.path 加入项目根目录之前导入
 from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, transforms
 import matplotlib
 matplotlib.use("Agg")                        # 不弹出窗口，直接把图保存成文件
 import matplotlib.pyplot as plt
+from matplotlib.font_manager import FontProperties
+
+# 加入项目根目录，才能 import src.models 包（torchattacks 已提前导入，不受影响）
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 # SimpleCifar10CNN 和 CIFAR10_CLASSES 统一定义在 src/models/cifar10_cnn.py。
 from src.models.cifar10_cnn import SimpleCifar10CNN, CIFAR10_CLASSES
+
+
+def get_chinese_font() -> FontProperties | None:
+    """寻找系统里的中文字体，避免 Matplotlib 保存中文标题时报缺字警告。"""
+    font_candidates = [
+        Path("C:/Windows/Fonts/msyh.ttc"),          # 微软雅黑
+        Path("C:/Windows/Fonts/NotoSansSC-VF.ttf"), # 思源黑体 / Noto Sans 简体中文
+        Path("C:/Windows/Fonts/simhei.ttf"),        # 黑体
+        Path("C:/Windows/Fonts/simsun.ttc"),        # 宋体
+    ]
+    for font_path in font_candidates:
+        if font_path.exists():
+            return FontProperties(fname=str(font_path))
+    return None
+
+
+CHINESE_FONT = get_chinese_font()
 
 
 # ── 路径配置 ──────────────────────────────────────────────────────────────────
@@ -61,6 +83,9 @@ FGSM_EPS = 8 / 255 #扰动幅度
 PGD_EPS   = 8 / 255
 PGD_ALPHA = 2 / 255
 PGD_STEPS = 10
+
+# FGSM和PGD都是基于梯度的攻击方法，FGSM只进行一步攻击，而PGD则是多步迭代攻击。
+# PGD在每一步都会将扰动投影回允许的范围内，因此通常比FGSM更强大。
 
 # ── 加载模型 ──────────────────────────────────────────────────────────────────
 # 优先使用 GPU，没有 GPU 就用 CPU
@@ -171,7 +196,7 @@ else:
     n = len(show_idx)
     # 3 行（原图 / FGSM 对抗样本 / PGD 对抗样本）x n 列（每列一张图）
     fig, axes = plt.subplots(3, n, figsize=(n * 2.5, 7))
-    fig.suptitle("白盒攻击可视化（每列一张图）", fontsize=13)
+    fig.suptitle("白盒攻击可视化（每列一张图）", fontsize=13, fontproperties=CHINESE_FONT)
 
     row_titles = ["原图", "FGSM 对抗样本", "PGD 对抗样本"]
     imgs_list  = [first_images, fgsm_images, pgd_images]
@@ -189,9 +214,14 @@ else:
             pred_name = CIFAR10_CLASSES[preds[idx].item()]
             # 预测正确显示绿色，预测错误显示红色
             color = "green" if preds[idx] == first_labels[idx] else "red"
-            ax.set_title(f"真:{true_name}\n预:{pred_name}", fontsize=8, color=color)
+            ax.set_title(
+                f"真:{true_name}\n预:{pred_name}",
+                fontsize=8,
+                color=color,
+                fontproperties=CHINESE_FONT,
+            )
             if col == 0:
-                ax.set_ylabel(row_title, fontsize=10)
+                ax.set_ylabel(row_title, fontsize=10, fontproperties=CHINESE_FONT)
 
     plt.tight_layout()
     save_path = FIGURES_DIR / "whitebox_attack_comparison.png"

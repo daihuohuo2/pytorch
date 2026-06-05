@@ -40,9 +40,9 @@
 adversarial-attacks-pytorch-lab/
 ├─ data/                         # 本地数据集，不提交实际数据
 ├─ demo/                         # 可直接运行的复盘 demo
-│  ├─ White-box Attack on CIFAR10.py
-│  ├─ White-box Targeted Attack on CIFAR10.py
-│  ├─ Transfer Attack on CIFAR10.py
+│  ├─ white_box_attack_cifar10.py
+│  ├─ white_box_targeted_attack_cifar10.py
+│  ├─ transfer_attack_cifar10.py
 │  └─ utils.py
 ├─ experiments/                  # 后续扩展实验入口
 ├─ models/                       # 本地模型权重，不提交 .pth 文件
@@ -138,7 +138,7 @@ models/cifar10_cnn.pth
 当前可运行 demo：
 
 ```powershell
-python "demo/White-box Attack on CIFAR10.py"
+python "demo/white_box_attack_cifar10.py"
 ```
 
 该脚本会完成：
