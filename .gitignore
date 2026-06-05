@@ -1,0 +1,35 @@
+# Python 缓存
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+
+# 虚拟环境和本地配置
+.venv/
+venv/
+.env
+.env.*
+.vscode/
+
+# 数据集通常很大，不提交到 GitHub
+data/*
+!data/.gitkeep
+
+# 实验输出可以本地保留，不提交到 GitHub
+outputs/*
+outputs/**/*
+!outputs/.gitkeep
+!outputs/*/
+!outputs/**/.gitkeep
+
+# 模型权重和中间数组通常很大，不提交到 GitHub
+*.pt
+*.pth
+*.ckpt
+*.npz
+*.npy
+
+# 日志和临时文件
+*.log
+tmp/
+temp/
