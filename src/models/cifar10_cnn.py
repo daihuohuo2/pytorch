@@ -40,23 +40,29 @@ class SimpleCifar10CNN(nn.Module):
         注意：这里输出的是 logits，没有经过 Softmax。
         torchattacks 和 CrossEntropyLoss 都直接接受 logits 输入。
     """
-
-    def __init__(self) -> None:
-        super().__init__()
+    # CNN的原理：卷积神经网络（CNN）是一种专门用于处理图像数据的深度学习模型。
+    # 它通过卷积层提取图像的局部特征，池化层降低特征图的尺寸，最后通过全连接层进行分类。
+    # CNN 的核心思想是利用局部连接、权重共享和池化操作，使模型能够有效地捕捉图像中的空间结构和模式，从而实现高效的图像分类。
+    def __init__(self) -> None:#初始化模型
+        super().__init__()#调用父类的初始化方法，确保 nn.Module 正常工作
 
         # features 是特征提取模块，负责从图片中提取边缘、纹理、形状等视觉特征。
         # 通道数逐层增加（32 → 64 → 128），让模型能表达越来越复杂的图像概念。
         self.features = nn.Sequential(
             # 第一组卷积：3 通道输入 → 32 通道特征，空间尺寸保持 32x32
             # padding=1 保证 3x3 卷积后宽高不变
-            nn.Conv2d(3, 32, kernel_size=3, padding=1),
+            nn.Conv2d(3, 32, kernel_size=3, padding=1),#二维卷积层，输入通道数3，输出通道数32，卷积核大小3x3，边界填充1
+            #为什么padding=1能保持宽高不变？输出宽高=(输入宽高 - 卷积核宽高 + 2*padding) / stride + 1
             nn.BatchNorm2d(32),   # 批归一化：稳定训练，加快收敛
-            nn.ReLU(inplace=True),
+            nn.ReLU(inplace=True),#激活函数：引入非线性，使模型能学习复杂模式
+
             nn.Conv2d(32, 32, kernel_size=3, padding=1),
             nn.BatchNorm2d(32),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2),      # 32x32 → 16x16，缩小特征图，降低计算量
+            #最大池化层，池化核大小2x2，步长默认等于核大小，作用是下采样，减少特征图尺寸，同时保留重要特征
             nn.Dropout(0.2),      # 训练时随机丢弃 20% 神经元，抑制过拟合
+            # Dropout 只在训练时生效，评估时会自动关闭，不影响模型性能。
 
             # 第二组卷积：32 通道 → 64 通道，空间尺寸保持 16x16
             nn.Conv2d(32, 64, kernel_size=3, padding=1),
@@ -78,7 +84,7 @@ class SimpleCifar10CNN(nn.Module):
         # classifier 是分类器模块，负责把卷积提取的特征转换成 10 个类别分数。
         self.classifier = nn.Sequential(
             # 展平：把 (128, 4, 4) 的多维特征图压成一维向量，长度 128*4*4=2048
-            nn.Flatten(),
+            nn.Flatten(),# flatten 层将多维输入展平为一维，保持 batch_size 不变，方便后续全连接层处理
             nn.Linear(128 * 4 * 4, 256),  # 全连接层，压缩到 256 维
             nn.ReLU(inplace=True),
             nn.Dropout(0.4),
